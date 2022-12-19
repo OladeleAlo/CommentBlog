@@ -10,6 +10,8 @@ import EditPost from "./EditPost";
 import { Route, Routes, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
+import useWindowSize from "./hooks/useWindowSize";
+import useAxiosFetch from "./hooks/useAxiosFetch";
 
 import api from "./api/posts";
 
@@ -22,26 +24,14 @@ function App() {
   const [editTitle, setEditTitle] = useState("");
   const [editBody, setEditBody] = useState("");
   const Navigate = useNavigate();
+  const { width } = useWindowSize();
 
+  const { data, fetchError, isLoading } = useAxiosFetch(
+    "http://localhost:3500/posts"
+  );
   useEffect(() => {
-    const fetchPosts = async () => {
-      try {
-        const response = await api.get("/posts");
-        setPosts(response.data);
-      } catch (err) {
-        if (err.response) {
-          // response not in a 200 range
-          console.log(err.response.data);
-          console.log(err.response.status);
-          console.log(err.response.header);
-        } else {
-          // if we do not get a response atall or 404 error
-          console.log(`Error: ${err.message}`);
-        }
-      }
-    };
-    fetchPosts();
-  }, []);
+    setPosts(data);
+  }, [data]);
 
   useEffect(() => {
     const filteredResults = posts.filter(
@@ -54,36 +44,30 @@ function App() {
 
   const handleDelete = async (id) => {
     try {
-      await api.delete(`/posts/${id}`)
+      await api.delete(`/posts/${id}`);
       const postList = posts.filter((post) => post.id !== id);
-    setPosts(postList);
-    Navigate("/");
-      
+      setPosts(postList);
+      Navigate("/");
     } catch (err) {
       console.log(`Error: ${err.message}`);
     }
-    
   };
 
-
-  const handleEdit= async (id)=> {
+  const handleEdit = async (id) => {
     const datetime = format(new Date(), "MMMM dd,yyyy pp");
-    const updatedPost = {id,title:editTitle,datetime,body:editBody};
-    try{
-      const response = await api.put(`/posts/${id}`,updatedPost)
-      setPosts(posts.map(post => post.id === id? {...response.data} : post))
-      setEditTitle("")
-      setEditBody("")
-      Navigate("/")
-
-    }catch(err){
+    const updatedPost = { id, title: editTitle, datetime, body: editBody };
+    try {
+      const response = await api.put(`/posts/${id}`, updatedPost);
+      setPosts(
+        posts.map((post) => (post.id === id ? { ...response.data } : post))
+      );
+      setEditTitle("");
+      setEditBody("");
+      Navigate("/");
+    } catch (err) {
       console.log(`Error: ${err.message}`);
     }
-
-  }
-
-
-
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -91,7 +75,7 @@ function App() {
     const datetime = format(new Date(), "MMMM dd,yyyy pp");
     const newPost = { id, title: postTitle, datetime, body: postBody };
     try {
-      const response = await api.post('/posts', newPost);
+      const response = await api.post("/posts", newPost);
       const allPosts = [...posts, response.data];
       setPosts(allPosts);
       setPostTitle(" ");
@@ -103,10 +87,19 @@ function App() {
   };
   return (
     <div className="App">
-      <Header title="React JS Blog" />
+      <Header title="React JS Blog" width={width} />
       <Nav search={search} setSearch={setSearch} />
       <Routes>
-        <Route path="/" element={<Home posts={searchResults} />}></Route>
+        <Route
+          path="/"
+          element={
+            <Home
+              posts={searchResults}
+              fetchError={fetchError}
+              isLoading={isLoading}
+            />
+          }
+        ></Route>
         <Route
           path="/post"
           element={
@@ -120,11 +113,11 @@ function App() {
           }
         ></Route>
 
-<Route
+        <Route
           path="/edit/:id"
           element={
             <EditPost
-            posts = {posts}
+              posts={posts}
               handleEdit={handleEdit}
               editTitle={editTitle}
               setEditTitle={setEditTitle}
@@ -133,9 +126,6 @@ function App() {
             />
           }
         ></Route>
-
-
-
 
         <Route
           path="/post/:id"
