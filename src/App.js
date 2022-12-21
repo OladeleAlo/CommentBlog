@@ -14,7 +14,7 @@ import { DataProvider } from "./context/dataContext";
 function App() {
   return (
     <div className="App">
-      <Header title="React JS Blog" />
+      <Header title="Comments Blog" />
       <DataProvider>
         <Nav />
         <Routes>
