@@ -1,3 +1,12 @@
+Clone the main repository branch and not the master branch.
+
+run npx json-server -p 3500 -w data/db.json on separate terminal
+run npm start on another terminal
+
+
+
+
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
